@@ -24,7 +24,8 @@ This project aligns with:
 - 🐟 SDG 14: Life Below Water – by promoting sustainable fishing
 - 🌿 SDG 13: Climate Action – by tracking impact scores
 
----
+---![d79a8d94-9904-48de-b4e2-85400cc91bf9](https://github.com/user-attachments/assets/78a924d3-c9fa-442a-9d53-4bfb53f51675)
+
 
 ## 🛠️ Tech Stack
 
@@ -96,7 +97,8 @@ This project aligns with:
 
 > (Add UI screenshots showing form, map, leaderboard, badges, report download)
 Form:
-![alt text](image.png)
+> ![d79a8d94-9904-48de-b4e2-85400cc91bf9](https://github.com/user-attachments/assets/f1b1c1c6-6114-473d-a006-3230effc8e74)
+
 Map:
 
 Leaderboard:
