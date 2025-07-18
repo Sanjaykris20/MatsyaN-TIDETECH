@@ -100,12 +100,20 @@ Form:
 > ![d79a8d94-9904-48de-b4e2-85400cc91bf9](https://github.com/user-attachments/assets/f1b1c1c6-6114-473d-a006-3230effc8e74)
 
 Map:
+> ![bb674ce6-eefc-44ef-a466-fa76f62d52ae](https://github.com/user-attachments/assets/2ed164ab-a7cf-4ae3-826b-fd6e66ccf546)
+
+Dashboard:-
+> ![5a4485c7-57e9-42ac-8095-8e3b725d8ac7](https://github.com/user-attachments/assets/c3c765cc-33c6-40ac-8d3e-ad9b4e67825c)
 
 Leaderboard:
+> ![239d8a43-68d7-4fbc-8b03-44f3e1df9b74](https://github.com/user-attachments/assets/531e9016-96f3-4d71-9331-544a8060c0fb)
 
 Badges:
+> ![239d8a43-68d7-4fbc-8b03-44f3e1df9b74](https://github.com/user-attachments/assets/34de813d-e04f-4af4-a0cc-1fcc5bd41a4c)
 
 Report Dowload:
+> ![Uploading 9b0e9a5c-9740-4ee1-b0f1-62e5241ed93e.jpg…]()
+
 
 
 ---
