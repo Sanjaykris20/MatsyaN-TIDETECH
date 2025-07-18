@@ -1,0 +1,2362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Oceano Community Hub</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+  <!-- Leaflet Map CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <!-- Choices.js CSS for enhanced dropdowns -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
+  <style>
+    /* Base styles */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      line-height: 1.6;
+      overflow-x: hidden;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #333; /* Default text color */
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+        width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+        background: #e0e0e0;
+        border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+        background: #555;
+        cursor: pointer;
+    }
+
+    /* Navigation */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      z-index: 1000;
+      padding: 1rem 0;
+      box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .nav-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 2rem;
+    }
+
+    .logo {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #2c5282;
+      text-decoration: none;
+    }
+
+    .nav-links {
+      display: flex;
+      list-style: none;
+      gap: 2rem;
+    }
+
+    .nav-links a {
+      text-decoration: none;
+      color: #4a5568;
+      font-weight: 500;
+      transition: color 0.3s;
+      cursor: pointer;
+    }
+
+    .nav-links a:hover,
+    .nav-links a.active {
+      color: #2c5282;
+      font-weight: 700;
+    }
+
+    /* Hero Section */
+    .hero {
+      height: 100vh;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><defs><radialGradient id="a" cx="50%" cy="50%"><stop offset="0%" style="stop-color:%23ffffff;stop-opacity:0.1"/><stop offset="100%" style="stop-color:%23ffffff;stop-opacity:0"/></radialGradient></defs><circle cx="200" cy="200" r="100" fill="url(%23a)"/><circle cx="800" cy="300" r="150" fill="url(%23a)"/><circle cx="400" cy="700" r="120" fill="url(%23a)"/></svg>');
+      opacity: 0.3;
+      animation: float 20s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-20px); }
+    }
+
+    .hero-content {
+      text-align: center;
+      color: white;
+      z-index: 2;
+      position: relative;
+    }
+
+    .hero h1 {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+      font-weight: 300;
+      letter-spacing: 2px;
+      animation: fadeInUp 1s ease-out;
+    }
+
+    .hero p {
+      font-size: 1.5rem;
+      margin-bottom: 2rem;
+      opacity: 0.9;
+      animation: fadeInUp 1s ease-out 0.3s both;
+    }
+
+    .cta-button {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      padding: 1rem 2rem;
+      text-decoration: none;
+      border-radius: 50px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      animation: fadeInUp 1s ease-out 0.6s both;
+    }
+
+    .cta-button:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Main Content Wrapper for Tabs */
+    .main-content-wrapper {
+        padding-top: 6rem; /* Space for fixed nav */
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .content-section {
+        display: none; /* Hidden by default for tabbed content */
+        padding: 6rem 0; /* Add padding for sections */
+    }
+
+    .content-section.active {
+        display: block; /* Show active tab */
+    }
+
+    /* Calculator Section */
+    #calculator.content-section {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      position: relative;
+    }
+
+    #calculator.content-section::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><path d="M0,300 Q250,250 500,300 T1000,300 L1000,0 L0,0 Z" fill="rgba(255,255,255,0.1)"/></svg>');
+      opacity: 0.3;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 2rem;
+      position: relative;
+      z-index: 2;
+    }
+
+    .section-title {
+      text-align: center;
+      font-size: 3rem;
+      color: white;
+      margin-bottom: 3rem;
+      font-weight: 300;
+    }
+
+    .calculator-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4rem;
+      align-items: start;
+    }
+
+    .calculator-form {
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(20px);
+      border-radius: 20px;
+      padding: 3rem;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      animation: slideInLeft 1s ease-out;
+    }
+
+    @keyframes slideInLeft {
+      from {
+        opacity: 0;
+        transform: translateX(-50px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    .form-group {
+      margin-bottom: 2rem;
+    }
+
+    .form-group label {
+      display: block;
+      color: white;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      font-size: 1.1rem;
+    }
+
+    .form-group select,
+    .form-group input,
+    .form-group textarea {
+      width: 100%;
+      padding: 1rem;
+      border: none;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.9);
+      font-size: 1rem;
+      transition: all 0.3s ease;
+    }
+
+    .form-group select:focus,
+    .form-group input:focus,
+    .form-group textarea:focus {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3);
+      transform: translateY(-2px);
+    }
+
+    .submit-btn {
+      width: 100%;
+      padding: 1rem;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .submit-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .results-panel {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      border-radius: 20px;
+      padding: 3rem;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      animation: slideInRight 1s ease-out;
+    }
+
+    @keyframes slideInRight {
+      from {
+        opacity: 0;
+        transform: translateX(50px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    .score-display {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .score-circle {
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
+      background: conic-gradient(from 0deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1rem;
+      position: relative;
+    }
+
+    .score-circle::before {
+      content: '';
+      position: absolute;
+      width: 130px;
+      height: 130px;
+      background: white;
+      border-radius: 50%;
+    }
+
+    .score-value {
+      font-size: 2.5rem;
+      font-weight: bold;
+      color: #2c5282;
+      z-index: 1;
+    }
+
+    .badge-display {
+      text-align: center;
+      margin-top: 1rem;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
+
+    .badge-gold {
+      background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+      color: #8b4513;
+    }
+
+    .badge-silver {
+      background: linear-gradient(135deg, #c0c0c0 0%, #e5e5e5 100%);
+      color: #4a4a4a;
+    }
+
+    .badge-bronze {
+      background: linear-gradient(135deg, #cd7f32 0%, #e6a85c 100%);
+      color: #5d4037;
+    }
+
+    .feedback {
+      margin-top: 2rem;
+      padding: 1rem;
+      border-radius: 10px;
+      background: rgba(103, 126, 234, 0.1);
+      border-left: 4px solid #667eea;
+    }
+
+    /* Dashboard Section */
+    #dashboard.content-section {
+      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3rem;
+      margin-top: 3rem;
+    }
+
+    .dashboard-card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      border-radius: 20px;
+      padding: 2rem;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .dashboard-card h3 {
+      color: #2c5282;
+      margin-bottom: 1rem;
+      font-size: 1.5rem;
+    }
+
+    .progress-bar {
+      height: 20px;
+      background: rgba(103, 126, 234, 0.2);
+      border-radius: 10px;
+      overflow: hidden;
+      margin: 1rem 0;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      transition: width 1s ease;
+    }
+
+    .trip-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+      font-size: 0.9rem;
+    }
+
+    .trip-table th,
+    .trip-table td {
+      padding: 0.75rem;
+      text-align: left;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .trip-table th {
+      background: rgba(103, 126, 234, 0.1);
+      color: #2c5282;
+      font-weight: 600;
+    }
+
+    .download-buttons {
+      display: flex;
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+
+    .download-btn {
+      padding: 0.75rem 1.5rem;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .download-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Chart Container */
+    .chart-container {
+      margin-top: 2rem;
+      height: 300px;
+      background: white;
+      border-radius: 10px;
+      padding: 1rem;
+    }
+
+    /* Community Sections */
+    #community.content-section {
+        background: linear-gradient(135deg, #a77bf3 0%, #7d44e3 100%);
+    }
+    .community-section .section-title {
+        color: white;
+    }
+    .post-card {
+        background: #ffffff;
+        padding: 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        margin-bottom: 1.5rem;
+    }
+    .post-card h3 {
+        font-size: 1.75rem;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 0.5rem;
+    }
+    .post-card p {
+        color: #555;
+        line-height: 1.6;
+    }
+    .post-meta {
+        font-size: 0.85rem;
+        color: #777;
+        margin-top: 0.75rem;
+        border-top: 1px solid #eee;
+        padding-top: 0.75rem;
+    }
+    .comments-section {
+        background: #f9f9f9;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-top: 1rem;
+        border: 1px solid #eee;
+    }
+    .comments-section h4 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #444;
+        margin-bottom: 1rem;
+    }
+    .comment-item {
+        background: #ffffff;
+        padding: 0.75rem;
+        border-radius: 6px;
+        margin-bottom: 0.75rem;
+        box-shadow: 0 1px 5px rgba(0,0,0,0.05);
+    }
+    .comment-item p {
+        font-size: 0.95rem;
+        color: #444;
+    }
+    .comment-meta {
+        font-size: 0.75rem;
+        color: #888;
+        margin-top: 0.25rem;
+    }
+    .comment-form textarea {
+        width: 100%;
+        padding: 0.75rem;
+        border-radius: 8px;
+        border: 1px solid #ddd;
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+    }
+    .comment-form button {
+        background: #7d44e3;
+        color: white;
+        padding: 0.6rem 1.2rem;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        transition: background 0.3s ease;
+    }
+    .comment-form button:hover {
+        background: #6a37c2;
+    }
+
+    /* Friends Section specific styling */
+    .friends-section-card {
+        background: #ffffff;
+        padding: 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        margin-bottom: 1.5rem;
+    }
+    .friends-list li {
+        background: #f0f0f0;
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        margin-bottom: 0.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .friends-list li button {
+        background: #ef4444; /* Red for remove */
+        color: white;
+        padding: 0.3rem 0.6rem;
+        border-radius: 5px;
+        font-size: 0.8rem;
+        cursor: pointer;
+    }
+    .friends-list li button:hover {
+        background: #dc2626;
+    }
+
+
+    /* Map Section */
+    #map.content-section {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+    #fishingMap {
+        width: 100%;
+        height: 400px;
+        border-radius: 12px;
+        margin-top: 1rem;
+    }
+    /* 🌍 Map Legend Styling */
+    .map-legend {
+        background: white;
+        padding: 8px;
+        border-radius: 8px;
+        box-shadow: 0 0 5px rgba(0,0,0,0.3);
+        font-size: 14px;
+    }
+    .map-legend h4 {
+        margin: 0 0 5px;
+        font-size: 16px;
+    }
+
+
+    /* About Section */
+    #about.content-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    #about.content-section .section-title {
+        color: white;
+    }
+
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .calculator-grid,
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+      }
+
+      .hero h1 {
+        font-size: 2.5rem;
+      }
+
+      .hero p {
+        font-size: 1.2rem;
+      }
+
+      .section-title {
+        font-size: 2rem;
+      }
+
+      .nav-links {
+        display: none;
+      }
+
+      .calculator-form,
+      .results-panel {
+        padding: 2rem;
+      }
+    }
+
+    /* Animations */
+    .animate-on-scroll {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: all 0.8s ease;
+    }
+
+    .animate-on-scroll.animated {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .about-animate {
+      font-size: 1.5rem;
+      font-weight: 600;
+      letter-spacing: 1px;
+      animation: fadeInAbout 2s ease-in;
+      margin-bottom: 0.5rem;
+      font-family: 'Montserrat', 'Segoe UI', Arial, sans-serif;
+    }
+    .tidetech-name {
+      color: #fff;
+      background: linear-gradient(90deg, #667eea 0%, #f093fb 100%);
+      padding: 0.2em 0.7em;
+      border-radius: 12px;
+      font-family: 'Orbitron', 'Montserrat', 'Segoe UI', Arial, sans-serif;
+      font-size: 1.6rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      box-shadow: 0 2px 12px rgba(102,126,234,0.15);
+      display: inline-block;
+    }
+    .team-names {
+      font-size: 1.15rem;
+      color: #22223b;
+      animation: fadeInAbout 2.5s ease-in;
+      font-family: 'Montserrat', 'Segoe UI', Arial, sans-serif;
+      margin-top: 0.5rem;
+    }
+    .team-label {
+      font-weight: bold;
+      color: #317f9e;
+      margin-right: 0.5em;
+      font-family: 'Orbitron', 'Montserrat', 'Segoe UI', Arial, sans-serif;
+      letter-spacing: 1px;
+    }
+    .team-panel {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+      background: rgba(118, 75, 162, 0.08);
+      border-radius: 16px;
+      padding: 1rem 0.5rem;
+      box-shadow: 0 2px 8px rgba(118,75,162,0.08);
+    }
+    .team-list {
+      color: #f7f4fa;
+      font-weight: 600;
+      font-family: 'Montserrat', 'Segoe UI', Arial, sans-serif;
+      background: rgba(118, 75, 162, 0.12);
+      border-radius: 8px;
+      padding: 0.5em 1em;
+      margin: 0 0.2em;
+      font-size: 1.1rem;
+      letter-spacing: 1px;
+      box-shadow: 0 1px 4px rgba(118,75,162,0.07);
+    }
+    @keyframes fadeInAbout {
+      from { opacity: 0; transform: translateY(30px);}
+      to { opacity: 1; transform: translateY(0);}
+    }
+    /* Login form styles */
+    .login-form-container {
+      background: white;
+      border-radius: 20px;
+      padding: 2rem;
+      box-shadow: 0 8px 40px rgba(102,126,234,0.15);
+      min-width: 320px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .login-form h2 {
+      margin-bottom: 1rem;
+      color: #764ba2;
+    }
+    .login-form .form-group {
+      margin-bottom: 1rem;
+      width: 100%;
+    }
+    .login-form input {
+      width: 100%;
+      padding: 0.75rem;
+      border-radius: 10px;
+      border: 1px solid #eee;
+      font-size: 1rem;
+    }
+    .login-form .submit-btn {
+      width: 100%;
+      padding: 1rem;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .delete-btn {
+      background: #ff4757;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 0.3rem 0.7rem;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: background-color 0.2s;
+    }
+
+    .delete-btn:hover {
+      background: #ff6b81;
+    }
+
+    .trip-table th:last-child,
+    .trip-table td:last-child {
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation -->
+  <nav>
+    <div class="nav-container">
+      <a href="#" class="logo">🌊 OCEANO</a>
+      <ul class="nav-links">
+        <li><a href="#" data-section-id="calculator" class="active">Calculator</a></li>
+        <li><a href="#" data-section-id="dashboard">Dashboard</a></li>
+        <li><a href="#" data-section-id="community">Community</a></li>
+        <li><a href="#" data-section-id="map">Map</a></li>
+        <li><a href="#" data-section-id="about">About</a></li>
+        <li><a href="#" data-section-id="contact">Contact</a></li>
+      </ul>
+      <!-- User Info and Mobile Menu Button -->
+      <div class="flex items-center space-x-4">
+          <span id="user-status" class="text-gray-600 text-sm">Loading user...</span>
+          <!-- Mobile menu button - currently not functional, but good for structure -->
+          <button class="md:hidden text-gray-700 focus:outline-none focus:text-indigo-600">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+              </svg>
+          </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section (remains separate as it's a full-page intro) -->
+  <section class="hero">
+    <div class="hero-content">
+      <h1>The Sustainable Fishing Calculator & Community</h1>
+      <p>Calculate your environmental impact, earn eco-badges, and connect with fellow enthusiasts!</p>
+      <button class="cta-button" onclick="showSection('calculator')">Start Calculating</button>
+    </div>
+  </section>
+
+  <!-- Main content wrapper for tabbed sections -->
+  <div class="main-content-wrapper">
+    <!-- Calculator Section -->
+    <section id="calculator" class="content-section active">
+      <div class="container">
+        <h2 class="section-title">Calculate Your Eco Score</h2>
+        
+        <div class="calculator-grid">
+          <div class="calculator-form">
+            <form id="tripForm">
+              <div class="form-group">
+                <label for="gearType">🎣 Fishing Gear Type</label>
+                <select id="gearType">
+                  <option value="gillnet">Gillnet</option>
+                  <option value="longline">Longline</option>
+                  <option value="pole">Pole & Line</option>
+                  <option value="trawl">Trawling Net</option>
+                  <option value="cast">Cast Net</option>
+                  <option value="seine">Seine Net</option>
+                  <option value="hook">Hook & Line</option>
+                  <option value="traditional">Traditional Catamaran Net</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="speciesType">🐟 Species Caught</label>
+                <select id="speciesType">
+                  <option value="vanjaram">Vanjaram (Seer Fish)</option>
+                  <option value="nethili">Nethili (Anchovy)</option>
+                  <option value="mathi">Mathi (Sardine)</option>
+                  <option value="sankara">Sankara (Red Snapper)</option>
+                  <option value="kola">Kola Meen (Mackerel)</option>
+                  <option value="vela">Vela Meen (Barracuda)</option>
+                  <option value="kara">Kara Meen (Pearl Spot)</option>
+                  <option value="prawn">Prawn</option>
+                  <option value="crab">Crab</option>
+                  <option value="squid">Squid</option>
+                  <option value="shark">Shark</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="quantity">⚖️ Quantity (kg)</label>
+                <input type="number" id="quantity" min="0" step="0.1" required>
+              </div>
+
+              <button type="submit" class="submit-btn">Calculate Eco Score</button>
+              <button type="button" class="submit-btn" id="previewBtn" style="margin-top:1rem;background:#4facfe;">Preview Score</button>
+            </form>
+          </div>
+
+          <div class="results-panel">
+            <div class="score-display">
+              <div class="score-circle">
+                <div class="score-value" id="scoreValue">--</div>
+              </div>
+              <div class="badge-display">
+                <div class="badge" id="badgeDisplay">Take the test!</div>
+              </div>
+            </div>
+            
+            <div class="feedback" id="feedback" style="display: none;">
+              <p id="feedbackText"></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Dashboard Section -->
+    <section id="dashboard" class="content-section">
+      <div class="container">
+        <h2 class="section-title">Your Fishing Dashboard</h2>
+        
+        <div class="dashboard-grid">
+          <div class="dashboard-card">
+            <h3>🏆 Badge Progress</h3>
+            <div id="badgeProgress">
+              <div>🥇 Gold: <span id="goldCount">0</span></div>
+              <div class="progress-bar">
+                <div class="progress-fill" id="goldProgress" style="width: 0%"></div>
+              </div>
+              <div>🥈 Silver: <span id="silverCount">0</span></div>
+              <div class="progress-bar">
+                <div class="progress-fill" id="silverProgress" style="width: 0%"></div>
+              </div>
+              <div>🥉 Bronze: <span id="bronzeCount">0</span></div>
+              <div class="progress-bar">
+                <div class="progress-fill" id="bronzeProgress" style="width: 0%"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="dashboard-card">
+            <h3>📊 Score History</h3>
+            <div class="chart-container">
+              <canvas id="ecoChart" width="400" height="200"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="dashboard-card" style="margin-top: 3rem;">
+          <h3>📋 Trip History</h3>
+          <table class="trip-table" id="tripTable">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Gear</th>
+                <th>Species</th>
+                <th>Quantity (kg)</th>
+                <th>Score</th>
+                <th>Badge</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="tripTableBody">
+              <tr>
+                <td colspan="7" style="text-align: center; color: #666;">No trips recorded yet</td>
+              </tr>
+            </tbody>
+          </table>
+          
+          <div class="download-buttons">
+            <button class="download-btn" onclick="downloadCSV()">📥 Download CSV</button>
+            <button class="download-btn" onclick="downloadPDF()">📄 Download PDF</button>
+            <button id="downloadReportBtn" class="download-btn">📝 Download Text Report</button>
+          </div>
+        </div>
+
+        <div class="dashboard-card" style="margin-top: 3rem;">
+          <h3>🏅 Leaderboard (Top 3 Eco-Warriors)</h3>
+          <table class="trip-table" id="leaderboardTable">
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>User</th>
+                <th>Average Score</th>
+                <th>Badge</th>
+              </tr>
+            </thead>
+            <tbody id="leaderboardBody">
+              <tr><td colspan="4" style="text-align:center;">No users yet</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Community Section -->
+    <section id="community" class="content-section">
+      <div class="container">
+        <h2 class="section-title">Community Forum</h2>
+        
+        <!-- Post Query Section -->
+        <div class="bg-white p-8 rounded-lg shadow-md mb-8">
+            <h3 class="text-2xl font-bold text-gray-800 mb-6 text-center">Share Your Thoughts</h3>
+            <form id="post-form" class="space-y-4">
+                <div class="form-group">
+                    <label for="post-title" class="block text-gray-700 text-sm font-bold mb-2">Title:</label>
+                    <input type="text" id="post-title" name="post-title" class="shadow appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" placeholder="Enter post title" required>
+                </div>
+                <div class="form-group">
+                    <label for="post-content" class="block text-gray-700 text-sm font-bold mb-2">Content:</label>
+                    <textarea id="post-content" name="post-content" rows="5" class="shadow appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" placeholder="What's on your mind?" required></textarea>
+                </div>
+                <button type="submit" class="submit-btn">
+                    Post Query
+                </button>
+            </form>
+        </div>
+
+        <!-- Friends Section -->
+        <div class="friends-section-card mb-8">
+            <h3 class="text-2xl font-bold text-gray-800 mb-6 text-center">My Friends</h3>
+            <div class="flex flex-col md:flex-row gap-4 mb-6 items-center justify-center">
+                <input type="text" id="friend-username-input" class="shadow appearance-none border rounded-lg py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent flex-grow" placeholder="Enter friend's email">
+                <button id="add-friend-btn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-full focus:outline-none focus:shadow-outline transition duration-300 ease-in-out">
+                    Add Friend
+                </button>
+            </div>
+            <ul id="friends-list" class="space-y-2">
+                <!-- Friends will be listed here -->
+                <p class="text-center text-gray-500">No friends added yet.</p>
+            </ul>
+
+            <h4 class="text-xl font-semibold text-gray-800 mt-8 mb-4 text-center">Friend Performance (Simulated)</h4>
+            <div id="friend-performance-display" class="bg-gray-100 p-4 rounded-lg text-gray-700">
+                <p>To view real performance data from friends securely, this would typically require advanced Firebase security rules and potentially Firebase Cloud Functions to fetch data only from mutually approved friends. In this client-side demo, this section serves as a placeholder.</p>
+                <p class="mt-2">You can imagine seeing summary stats or recent eco-scores of your friends here!</p>
+            </div>
+        </div>
+
+        <!-- Community Posts Section -->
+        <div id="posts-container" class="space-y-8">
+            <!-- Posts will be loaded here by JavaScript -->
+            <p class="text-center text-white text-lg">Loading community posts...</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Map Section -->
+    <section id="map" class="content-section">
+      <div class="container">
+        <h2 class="section-title">Map</h2>
+        <div class="dashboard-card">
+          <h3>🗺️ Fishing Zones & Your Location</h3>
+          <p class="text-gray-700">
+            Explore fishing locations, identify no-fishing zones, and see your current position on the map. Click anywhere on the map to log a simulated trip location!
+          </p>
+          <div id="fishingMap"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="content-section">
+        <div class="container">
+            <h2 class="section-title">About Oceano</h2>
+            <div class="dashboard-card text-center">
+                <p class="text-gray-700 leading-relaxed text-lg mb-4">
+                    Oceano is dedicated to promoting sustainable fishing practices and fostering a community of environmentally conscious individuals. Our platform provides tools to help you understand your ecological footprint and connect with others who share your passion for ocean conservation.
+                </p>
+                <p class="text-gray-700 leading-relaxed text-lg">
+                    Join us in our mission to protect marine life and ensure healthy oceans for future generations.
+                </p>
+            </div>
+            <div style="margin-top: 3rem; text-align: center;">
+                <div class="about-animate">
+                Project done by 
+                <span class="tidetech-name">TIDETECH</span>
+                </div>
+                <div class="team-names">
+                <span class="team-label">Team:</span>
+                <div class="team-panel">
+                    <span class="team-list">Sanjay Krishnan</span>
+                    <span class="team-list">Sagin Aadith</span>
+                    <span class="team-list">Rithikaa</span>
+                    <span class="team-list">Samyukta</span>
+                </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="content-section">
+        <div class="container">
+            <h2 class="section-title">Contact Us</h2>
+            <div class="dashboard-card">
+                <p class="text-gray-700 leading-relaxed text-lg mb-4">
+                    Have questions, suggestions, or just want to say hello? Reach out to us!
+                </p>
+                <form class="space-y-4">
+                    <div class="form-group">
+                        <label for="contact-name" class="block text-gray-700 text-sm font-bold mb-2">Your Name:</label>
+                        <input type="text" id="contact-name" class="shadow appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" placeholder="Your Name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="contact-email" class="block text-gray-700 text-sm font-bold mb-2">Your Email:</label>
+                        <input type="email" id="contact-email" class="shadow appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" placeholder="your.email@example.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="contact-message" class="block text-gray-700 text-sm font-bold mb-2">Message:</label>
+                        <textarea id="contact-message" rows="5" class="shadow appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" placeholder="Your message..." required></textarea>
+                    </div>
+                    <button type="submit" class="submit-btn">Send Message</button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+  </div> <!-- End of main-content-wrapper -->
+
+  <!-- Footer -->
+  <footer class="bg-gray-800 text-white py-8 mt-6 rounded-t-lg">
+      <div class="container mx-auto text-center">
+          <p>&copy; 2025 Oceano Community Hub. All rights reserved.</p>
+          <div class="flex justify-center space-x-6 mt-4">
+              <a href="#" class="text-gray-400 hover:text-white transition duration-300 ease-in-out">Privacy Policy</a>
+              <a href="#" class="text-gray-400 hover:text-white transition duration-300 ease-in-out">Terms of Service</a>
+          </div>
+      </div>
+  </footer>
+
+  <!-- Login/Register Modal -->
+  <div id="loginModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden" style="z-index:2000;">
+    <div class="login-form-container">
+      <form id="loginForm" class="login-form">
+        <h2 id="authTitle" class="text-2xl font-bold">Login</h2>
+        <div class="form-group">
+          <input type="email" id="email" placeholder="Email" required>
+        </div>
+        <div class="form-group">
+          <input type="password" id="password" placeholder="Password" required>
+        </div>
+        <button type="submit" class="submit-btn" id="authSubmitBtn">Login</button>
+        <p style="margin-top: 1rem; text-align: center;">
+          <a href="#" id="toggleAuthMode" style="color: #667eea; text-decoration: none;">
+            Don't have an account? Register here
+          </a>
+        </p>
+      </form>
+    </div>
+  </div>
+
+  <!-- Message Modal -->
+  <div id="message-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-content-center hidden" style="z-index:2001;">
+      <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full mx-4">
+          <h3 id="modal-title" class="text-xl font-bold mb-4"></h3>
+          <p id="modal-message" class="text-gray-700 mb-6"></p>
+          <button id="modal-close-button" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-full float-right">Close</button>
+      </div>
+  </div>
+
+  <div class="user-controls" style="position:fixed;bottom:2rem;right:2rem;z-index:1500;display:flex;gap:1rem;">
+    <button id="logoutBtn" style="display:none;" class="cta-button">Logout</button>
+    <button id="openLoginBtn" class="cta-button">Login</button>
+  </div>
+  <div id="userWelcome" style="position:fixed;bottom:5rem;right:2rem;z-index:1500;display:none;background:white;padding:0.5rem 1rem;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,0.1);">
+    Welcome, <span id="userDisplayName"></span>!
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <!-- Leaflet Map JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- Choices.js JS -->
+  <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+  
+  <script type="module">
+    // Firebase imports
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+    import { 
+      getAuth, 
+      signInAnonymously, 
+      signInWithCustomToken, 
+      onAuthStateChanged,
+      createUserWithEmailAndPassword, // Added for registration
+      signInWithEmailAndPassword,     // Added for login
+      signOut                       // Added for logout
+    } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
+    import { 
+      getFirestore, 
+      collection, 
+      addDoc, 
+      onSnapshot, 
+      doc, 
+      deleteDoc, 
+      setDoc, 
+      getDoc, 
+      getDocs,
+      query, 
+      where 
+    } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+
+    // Global variables for Canvas environment's app ID and initial auth token
+    // Use __app_id and __firebase_config if available, otherwise fallback to hardcoded
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'marineapp2025';
+    const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+      apiKey: "AIzaSyBsvKtLWAZG5qAEoHtfyuhLX4bAHT2UOGg",
+      authDomain: "marineapp2025.firebaseapp.com",
+      projectId: "marineapp2025",
+      storageBucket: "marineapp2025.firebasestorage.app",
+      messagingSenderId: "729791258661",
+      appId: "1:729791258661:web:b285f7dc973ab4c8451fcc",
+      measurementId: "G-3GRCJ8CV1R"
+    };
+    const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+    // Initialize Firebase
+    let app, db, auth;
+    let userId = null; // Firebase UID
+    let currentUserDisplayName = "Guest"; // User's display name (email or chosen name)
+    let isRegistrationMode = false;
+
+    // Application State for Eco-Fishing Data
+    let tripData = [];
+    let ecoChart = null;
+    let friendsList = []; // Stores friend UIDs (or emails if that's the identifier)
+    let mapInstance = null; // To store the Leaflet map instance
+
+    // Impact Values
+    const gearImpact = {
+      gillnet: 15, longline: 20, pole: 5, trawl: 35, cast: 10, seine: 18, hook: 8, traditional: 6
+    };
+
+    const speciesImpact = {
+      vanjaram: 25, nethili: 10, mathi: 12, sankara: 20, kola: 15, vela: 18, kara: 8, prawn: 22, crab: 16, squid: 14, shark: 40
+    };
+
+    const speciesTips = {
+      vanjaram: "⚠️ Vanjaram is in high demand and can be overfished. Fish responsibly!",
+      nethili: "✅ Nethili is a small pelagic species with low environmental impact.",
+      mathi: "✅ Mathi is considered sustainable and eco-friendly!",
+      sankara: "⚠️ Snapper populations are sensitive. Prefer lower-impact gear.",
+      kola: "🟡 Moderately sustainable. Avoid large-scale gear.",
+      vela: "🟡 Use with caution — not endangered but overfished in parts.",
+      kara: "✅ Kara Meen (Pearl Spot) is often farmed sustainably.",
+      prawn: "⚠️ Shrimp/prawn trawling can damage habitats. Use careful methods.",
+      crab: "🟡 Crab fishing is okay in small quantities.",
+      squid: "🟡 Squids are fast-growing but check local quotas.",
+      shark: "❌ Shark species are vulnerable. Avoid unless licensed."
+    };
+
+    // Function to display custom messages (instead of alert)
+    // This is the robust version that handles both simple messages and confirmations.
+    function displayMessage(message, title = "Notification", isConfirm = false, onConfirm = null) {
+        const modal = document.getElementById('message-modal');
+        document.getElementById('modal-title').innerText = title;
+        document.getElementById('modal-message').innerText = message;
+        
+        const closeButton = document.getElementById('modal-close-button');
+        // Remove previous event listeners to prevent multiple calls
+        const newCloseButton = closeButton.cloneNode(true);
+        closeButton.parentNode.replaceChild(newCloseButton, closeButton);
+        
+        if (isConfirm) {
+            newCloseButton.innerText = 'Confirm';
+            newCloseButton.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
+            newCloseButton.classList.add('bg-red-600', 'hover:bg-red-700');
+
+            const cancelButton = document.createElement('button');
+            cancelButton.id = 'modal-cancel-button';
+            cancelButton.className = 'bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-full float-right mr-2';
+            cancelButton.innerText = 'Cancel';
+            cancelButton.onclick = () => modal.classList.add('hidden');
+            newCloseButton.parentNode.insertBefore(cancelButton, newCloseButton);
+
+            newCloseButton.onclick = () => {
+                onConfirm && onConfirm();
+                modal.classList.add('hidden');
+            };
+        } else {
+            newCloseButton.innerText = 'Close';
+            newCloseButton.classList.remove('bg-red-600', 'hover:bg-red-700');
+            newCloseButton.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
+            const existingCancelButton = document.getElementById('modal-cancel-button');
+            if (existingCancelButton) existingCancelButton.remove();
+            newCloseButton.onclick = () => modal.classList.add('hidden');
+        }
+        modal.classList.remove('hidden');
+    }
+
+    // Close message modal event listener (kept separate for general close button)
+    document.getElementById('modal-close-button').addEventListener('click', () => {
+        document.getElementById('message-modal').classList.add('hidden');
+    });
+
+    // --- Tabbed Navigation Logic ---
+    function showSection(sectionId) {
+        document.querySelectorAll('.content-section').forEach(section => {
+            section.classList.remove('active');
+        });
+
+        const targetSection = document.getElementById(sectionId);
+        if (targetSection) {
+            targetSection.classList.add('active');
+            document.querySelector('.main-content-wrapper').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        document.querySelectorAll('.nav-links a').forEach(link => {
+            link.classList.remove('active');
+            if (link.dataset.sectionId === sectionId) {
+                link.classList.add('active');
+            }
+        });
+
+        // Trigger data loads if necessary for the newly active section
+        if (userId) { // Only load data if a Firebase user is authenticated
+            if (sectionId === 'dashboard') {
+                loadUserTripData();
+                updateLeaderboard();
+            } else if (sectionId === 'community') {
+                renderCommunityPosts();
+                loadFriendsList(); // Load friends list when community tab is active
+            } else if (sectionId === 'map') {
+                if (mapInstance) {
+                    mapInstance.invalidateSize();
+                }
+            }
+        }
+    }
+
+    // Attach event listeners to navigation links
+    document.querySelectorAll('.nav-links a').forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const sectionId = this.dataset.sectionId;
+            if (sectionId) {
+                showSection(sectionId);
+            }
+        });
+    });
+
+    // --- Firebase Initialization and Authentication ---
+    async function initializeFirebaseAndAuth() {
+        try {
+            app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+
+            // Attempt to sign in with custom token first if provided by Canvas
+            if (initialAuthToken) {
+                try {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                    console.log("[Auth] Signed in with custom token.");
+                } catch (customTokenError) {
+                    console.warn("[Auth] Custom token sign-in failed, attempting anonymous sign-in:", customTokenError.message);
+                    // Fallback to anonymous sign-in if custom token fails or if not defined
+                    await signInAnonymously(auth);
+                    console.log("[Auth] Signed in anonymously as fallback.");
+                }
+            } else {
+                // If no initialAuthToken, sign in anonymously
+                await signInAnonymously(auth);
+                console.log("[Auth] Signed in anonymously (no custom token provided).");
+            }
+
+            // Listen for auth state changes
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    userId = user.uid;
+                    document.getElementById('user-status').innerText = `User ID: ${userId.substring(0, 6)}...`; // Show truncated UID
+
+                    // Attempt to get display name from Firestore user profile
+                    const userDocRef = doc(db, `artifacts/${appId}/users`, userId);
+                    const userDocSnap = await getDoc(userDocRef);
+
+                    if (userDocSnap.exists() && userDocSnap.data().displayName) {
+                        currentUserDisplayName = userDocSnap.data().displayName;
+                    } else if (user.email) {
+                        currentUserDisplayName = user.email; // Use email if available
+                    } else {
+                        currentUserDisplayName = `Anon-${userId.substring(0, 6)}`; // Fallback for anonymous users
+                    }
+                    
+                    updateUIForLoggedInUser();
+                    console.log("[Auth] Firebase User authenticated:", userId, "Display Name:", currentUserDisplayName);
+                    
+                    // Load data for active section after user is authenticated
+                    const activeSectionId = document.querySelector('.content-section.active')?.id;
+                    if (activeSectionId === 'dashboard') {
+                        loadUserTripData();
+                        updateLeaderboard();
+                    } else if (activeSectionId === 'community') {
+                        renderCommunityPosts();
+                        loadFriendsList();
+                    }
+                    // For calculator and about, no specific data load needed on auth change
+                    // Map is initialized once on DOMContentLoaded
+                } else {
+                    // User logged out or not authenticated
+                    userId = null;
+                    currentUserDisplayName = "Guest";
+                    document.getElementById('user-status').innerText = 'Not authenticated';
+                    updateUIForLoggedOutUser();
+                    console.log("[Auth] Firebase User not authenticated.");
+                    
+                    // Clear all application data
+                    tripData = [];
+                    friendsList = [];
+                    updateChart();
+                    updateTripTable();
+                    updateBadgeProgress();
+                    document.getElementById('posts-container').innerHTML = '<p class="text-center text-white text-lg">Please log in to see community posts.</p>';
+                    renderFriendsList(); // Update friends list display to show empty
+                    updateLeaderboard(); // Clear leaderboard on logout
+                }
+            });
+
+        } catch (error) {
+            console.error("[Auth] Critical Error initializing Firebase or authenticating:", error);
+            if (error.code === 'auth/configuration-not-found') {
+                displayMessage(`Firebase Authentication Error: ${error.message}. This usually means Anonymous Authentication is not enabled in your Firebase project. Please go to your Firebase Console, navigate to 'Authentication' -> 'Sign-in method', and enable 'Anonymous' provider.`, "Firebase Configuration Error");
+            } else {
+                displayMessage(`Failed to initialize app: ${error.message}`, "Error");
+            }
+        }
+    }
+
+    // --- UI Updates based on Login State ---
+    function updateUIForLoggedInUser() {
+      document.getElementById('openLoginBtn').style.display = 'none';
+      document.getElementById('logoutBtn').style.display = 'block';
+      document.getElementById('userWelcome').style.display = 'block';
+      document.getElementById('userDisplayName').textContent = currentUserDisplayName;
+    }
+
+    function updateUIForLoggedOutUser() {
+      document.getElementById('openLoginBtn').style.display = 'block';
+      document.getElementById('logoutBtn').style.display = 'none';
+      document.getElementById('userWelcome').style.display = 'none';
+      document.getElementById('userDisplayName').textContent = '';
+    }
+
+    // --- Login/Logout Modal Logic (Now fully Firebase Auth based) ---
+    document.getElementById('openLoginBtn').onclick = function() {
+      document.getElementById('loginModal').classList.remove('hidden');
+      document.getElementById('email').value = ''; // Clear fields
+      document.getElementById('password').value = '';
+    };
+
+    document.getElementById('loginModal').onclick = function(e) {
+      if (e.target === this) this.classList.add('hidden');
+    };
+
+    document.getElementById('toggleAuthMode').addEventListener('click', function(e) {
+      e.preventDefault();
+      isRegistrationMode = !isRegistrationMode;
+      const authTitle = document.getElementById('authTitle');
+      const authSubmitBtn = document.getElementById('authSubmitBtn');
+      const toggleLink = document.getElementById('toggleAuthMode');
+      
+      if (isRegistrationMode) {
+        authTitle.textContent = 'Register';
+        authSubmitBtn.textContent = 'Register';
+        toggleLink.textContent = 'Already have an account? Login here';
+      } else {
+        authTitle.textContent = 'Login';
+        authSubmitBtn.textContent = 'Login';
+        toggleLink.textContent = "Don't have an account? Register here";
+      }
+      document.getElementById('email').value = ''; // Clear fields on mode switch
+      document.getElementById('password').value = '';
+    });
+
+    document.getElementById('loginForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value.trim();
+
+      if (!email || !password) {
+        displayMessage("Please enter both email and password.", "Missing Credentials");
+        return;
+      }
+
+      try {
+        console.log("[Auth Submit] Attempting authentication...");
+        if (isRegistrationMode) {
+          // Firebase Registration
+          console.log("[Auth Submit] Registering new user...");
+          const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+          const user = userCredential.user;
+          
+          // Store user profile in Firestore
+          await setDoc(doc(db, `artifacts/${appId}/users`, user.uid), {
+              email: user.email,
+              displayName: user.email // Default display name to email
+          });
+          console.log("[Auth Submit] User registered and profile saved.");
+          displayMessage('Registration successful! You are now logged in.', 'Success');
+          // No need to switch mode, onAuthStateChanged will handle UI update
+        } else {
+          // Firebase Login
+          console.log("[Auth Submit] Logging in existing user...");
+          await signInWithEmailAndPassword(auth, email, password);
+          console.log("[Auth Submit] User logged in.");
+          displayMessage(`Welcome, ${email}!`, 'Login Successful');
+        }
+        document.getElementById('loginModal').classList.add('hidden');
+        this.reset(); // Clear form fields
+        console.log("[Auth Submit] Login/Registration process completed successfully.");
+      } catch (error) {
+        console.error("[Auth Submit] Authentication error caught:", error);
+        let errorMessage = "An unknown authentication error occurred.";
+        if (error.code === 'auth/email-already-in-use') {
+          errorMessage = 'The email address is already in use by another account.';
+        } else if (error.code === 'auth/invalid-email') {
+          errorMessage = 'The email address is not valid.';
+        } else if (error.code === 'auth/operation-not-allowed') {
+          errorMessage = 'Email/Password authentication is not enabled. Please enable it in Firebase Console.';
+        } else if (error.code === 'auth/weak-password') {
+          errorMessage = 'The password is too weak. Please choose a stronger password.';
+        } else if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+          errorMessage = 'Invalid email or password.';
+        }
+        displayMessage(errorMessage, "Authentication Failed");
+        console.log("[Auth Submit] Displayed error message:", errorMessage);
+      }
+    });
+
+    document.getElementById('logoutBtn').addEventListener('click', async function() {
+      try {
+        await signOut(auth); // Firebase signOut
+        displayMessage("You have been logged out.", "Logged Out");
+        console.log("[Auth] User signed out.");
+        // onAuthStateChanged listener will handle clearing UI and data
+      } catch (error) {
+        console.error("[Auth] Error signing out:", error);
+        displayMessage(`Error logging out: ${error.message}`, "Error");
+      }
+    });
+
+    // --- Eco-Fishing Calculator Logic (Firestore based) ---
+
+    // Load User Trip Data from Firestore
+    function loadUserTripData() {
+        if (!db || !userId) {
+            console.log("[Firestore] Firestore or User ID not ready for trip data. Skipping loadUserTripData.");
+            return;
+        }
+
+        const userTripsCollectionRef = collection(db, `artifacts/${appId}/users/${userId}/trips`);
+
+        // Use onSnapshot for real-time updates
+        onSnapshot(userTripsCollectionRef, (snapshot) => {
+            tripData = [];
+            snapshot.forEach(doc => {
+                tripData.push({ id: doc.id, ...doc.data() });
+            });
+            // Sort by timestamp in descending order (newest first)
+            tripData.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+            updateChart();
+            updateTripTable();
+            updateBadgeProgress();
+            console.log("[Firestore] User trip data loaded:", tripData);
+        }, (error) => {
+            console.error("[Firestore] Error loading user trip data:", error);
+            displayMessage(`Failed to load your trip data: ${error.message}`, "Error");
+        });
+    }
+
+    // Save Trip to Firestore
+    async function saveTrip(trip) {
+      if (!db || !userId) {
+        displayMessage('Please log in to save your trip data!', 'Login Required');
+        document.getElementById('loginModal').classList.remove('hidden');
+        return;
+      }
+      try {
+        await addDoc(collection(db, `artifacts/${appId}/users/${userId}/trips`), {
+            ...trip,
+            timestamp: Date.now() // Add a timestamp for sorting
+        });
+        displayMessage("Trip saved successfully!", "Success");
+        console.log("[Firestore] Trip saved successfully.");
+      } catch (e) {
+        console.error("[Firestore] Error saving trip to Firestore: ", e);
+        displayMessage(`Error saving trip: ${e.message}`, "Error");
+      }
+    }
+
+    // Delete Trip from Firestore
+    async function deleteTrip(docId) {
+      if (!db || !userId) {
+        displayMessage('Please log in to delete trip data.', 'Login Required');
+        document.getElementById('loginModal').classList.remove('hidden');
+        return;
+      }
+      displayMessage('Are you sure you want to remove this trip?', 'Confirm Deletion', true, async () => {
+        try {
+          // The path for deletion must match the path for saving, including the user ID
+          await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/trips`, docId));
+          displayMessage("Trip deleted successfully!", "Success");
+          console.log("[Firestore] Trip deleted successfully.");
+        } catch (e) {
+          console.error("[Firestore] Error deleting trip from Firestore: ", e);
+          displayMessage(`Error deleting trip: ${e.message}`, "Error");
+        }
+      });
+    }
+
+    // Update Trip Table (modified to use Firestore doc IDs)
+    function updateTripTable() {
+      const tbody = document.getElementById('tripTableBody');
+      
+      if (tripData.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #666;">No trips recorded yet</td></tr>';
+        return;
+      }
+      
+      tbody.innerHTML = tripData.map((trip) => `
+        <tr>
+          <td>${new Date(trip.timestamp).toLocaleDateString()}</td>
+          <td>${trip.gear}</td>
+          <td>${trip.species}</td>
+          <td>${trip.qty}</td>
+          <td>${trip.score}</td>
+          <td><span class="badge badge-${trip.badge.toLowerCase()}">${trip.badge}</span></td>
+          <td>
+            <button onclick="deleteTrip('${trip.id}')" class="delete-btn">
+              🗑️ Delete
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    // Calculate Score
+    function calculateScore(gear, species, qty) {
+      const score = 100 - (gearImpact[gear] + speciesImpact[species] + qty * 0.5);
+      return Math.max(0, Math.min(100, Math.round(score)));
+    }
+
+    // Get Badge
+    function getBadge(score) {
+      if (score >= 70) return 'Gold';
+      if (score >= 50) return 'Silver'; 
+      return 'Bronze';
+    }
+
+    // Initialize Chart
+    function initChart() {
+      const ctx = document.getElementById('ecoChart').getContext('2d');
+      ecoChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: [],
+          datasets: [{
+            label: 'Eco Score',
+            data: [],
+            borderColor: '#667eea',
+            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+            tension: 0.4,
+            fill: true
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: 100
+            }
+          },
+            plugins: {
+              legend: {
+                display: false
+              }
+            }
+          }
+        });
+    }
+
+    // Update Chart
+    function updateChart() {
+      const labels = tripData.map((_, i) => `Trip ${i + 1}`);
+      const scores = tripData.map(trip => trip.score);
+      
+      ecoChart.data.labels = labels;
+      ecoChart.data.datasets[0].data = scores;
+      ecoChart.update();
+    }
+
+    // Update Badge Progress
+    function updateBadgeProgress() {
+      const count = { Gold: 0, Silver: 0, Bronze: 0 };
+      tripData.forEach(trip => count[trip.badge]++);
+      
+      document.getElementById('goldCount').textContent = count.Gold;
+      document.getElementById('silverCount').textContent = count.Silver;
+      document.getElementById('bronzeCount').textContent = count.Bronze;
+      
+      const total = tripData.length;
+      if (total > 0) {
+        document.getElementById('goldProgress').style.width = `${(count.Gold / total) * 100}%`;
+        document.getElementById('silverProgress').style.width = `${(count.Silver / total) * 100}%`;
+        document.getElementById('bronzeProgress').style.width = `${(count.Bronze / total) * 100}%`; // Fixed
+      } else {
+        document.getElementById('goldProgress').style.width = `0%`;
+        document.getElementById('silverProgress').style.width = `0%`;
+        document.getElementById('bronzeProgress').style.width = `0%`;
+      }
+    }
+
+    // Download CSV
+    function downloadCSV() {
+      if (tripData.length === 0) {
+        displayMessage('No data to download', "No Data");
+        return;
+      }
+      
+      let csv = 'Date,Gear,Species,Quantity,Score,Badge\n';
+      tripData.forEach(trip => {
+        csv += `${new Date(trip.timestamp).toLocaleDateString()},${trip.gear},${trip.species},${trip.qty},${trip.score},${trip.badge}\n`;
+      });
+      
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'eco_fishing_data.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // Download PDF
+    function downloadPDF() {
+      if (tripData.length === 0) {
+        displayMessage('No data to download', "No Data");
+        return;
+      }
+      
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      
+      doc.setFontSize(20);
+      doc.text('Eco-Fishing Trip Summary', 20, 20);
+      
+      let y = 40;
+      tripData.forEach((trip, index) => {
+        if (y > 280) {
+          doc.addPage();
+          y = 20;
+        }
+        
+        doc.setFontSize(14);
+        doc.text(`Trip ${index + 1}: ${new Date(trip.timestamp).toLocaleDateString()}`, 20, y);
+        y += 10;
+        
+        doc.setFontSize(12);
+        doc.text(`Gear: ${trip.gear} | Species: ${trip.species} | Quantity: ${trip.qty}kg`, 20, y);
+        y += 7;
+        doc.text(`Score: ${trip.score} | Badge: ${trip.badge}`, 20, y);
+        y += 15;
+      });
+      
+      doc.save('eco_fishing_summary.pdf');
+    }
+
+    // Download Text Report
+    document.getElementById("downloadReportBtn").addEventListener("click", function() {
+      if (!userId || currentUserDisplayName === "Guest") {
+        displayMessage("Please log in to download a report.", "Login Required");
+        document.getElementById('loginModal').classList.remove('hidden');
+        return;
+      }
+
+      const trips = tripData;
+
+      if (!trips || trips.length === 0) {
+        displayMessage("No trips found for this user to generate a report.", "No Data");
+        return;
+      }
+
+      const reportContent = trips.map((trip, i) => 
+        `Trip ${i + 1}:\nDate: ${new Date(trip.timestamp).toLocaleDateString()}\nGear: ${trip.gear}\nSpecies: ${trip.species}\nQuantity: ${trip.qty}kg\nImpact Score: ${trip.score}\nBadge: ${trip.badge}\n---`
+      ).join("\n\n");
+
+      const fullReport = `🎣 Oceano Trip Report\n\nUser: ${currentUserDisplayName}\nTrips Recorded: ${trips.length}\n\n${reportContent}`;
+
+      const blob = new Blob([fullReport], { type: "text/plain" });
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${currentUserDisplayName.replace(/[^a-z0-9]/gi, '_')}_trip_report.txt`; // Sanitize filename
+      a.click();
+
+      URL.revokeObjectURL(url);
+    });
+
+    // Form Submission for Eco-Fishing Calculator
+    document.getElementById('tripForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      if (!userId) {
+        displayMessage('Please log in to save your trip data!', 'Login Required');
+        document.getElementById('loginModal').classList.remove('hidden');
+        return;
+      }
+
+      const gear = document.getElementById('gearType').value;
+      const species = document.getElementById('speciesType').value;
+      const qty = parseFloat(document.getElementById('quantity').value);
+      
+      if (isNaN(qty) || qty < 0) {
+        displayMessage('Please enter a valid quantity.', "Invalid Input");
+        return;
+      }
+
+      const score = calculateScore(gear, species, qty);
+      const badge = getBadge(score);
+      
+      // Update display
+      document.getElementById('scoreValue').textContent = score;
+      const badgeDisplay = document.getElementById('badgeDisplay');
+      badgeDisplay.textContent = badge;
+      badgeDisplay.className = `badge badge-${badge.toLowerCase()}`;
+      
+      // Show feedback
+      const feedback = document.getElementById('feedback');
+      const feedbackText = document.getElementById('feedbackText');
+      feedbackText.textContent = speciesTips[species] || '';
+      feedback.style.display = 'block';
+      
+      // Save trip to Firestore
+      const trip = {
+        gear,
+        species,
+        qty,
+        score,
+        badge,
+        // date: new Date().toLocaleDateString() // Redundant with timestamp for sorting
+      };
+      
+      saveTrip(trip);
+      
+      // Reset form
+      this.reset();
+    });
+
+    document.getElementById('previewBtn').addEventListener('click', function() {
+      const gear = document.getElementById('gearType').value;
+      const species = document.getElementById('speciesType').value;
+      const qty = parseFloat(document.getElementById('quantity').value);
+
+      if (isNaN(qty) || qty < 0) {
+        displayMessage('Please enter a valid quantity.', "Invalid Input");
+        return;
+      }
+
+      const score = calculateScore(gear, species, qty);
+      const badge = getBadge(score);
+
+      // Update display
+      document.getElementById('scoreValue').textContent = score;
+      const badgeDisplay = document.getElementById('badgeDisplay');
+      badgeDisplay.textContent = badge;
+      badgeDisplay.className = `badge badge-${badge.toLowerCase()}`;
+
+      // Show feedback
+      const feedback = document.getElementById('feedback');
+      const feedbackText = document.getElementById('feedbackText');
+      feedbackText.textContent = speciesTips[species] || '';
+      feedback.style.display = 'block';
+    });
+
+    // --- Community Posts Logic ---
+
+    // Function to render posts and their comments
+    async function renderCommunityPosts() {
+        if (!db || !userId) {
+            console.log("[Community] Firestore or User ID not ready for community posts, skipping renderCommunityPosts.");
+            document.getElementById('posts-container').innerHTML = '<p class="text-center text-white text-lg">Please log in to see community posts.</p>';
+            return;
+        }
+
+        const postsContainer = document.getElementById('posts-container');
+        postsContainer.innerHTML = '<p class="text-center text-white text-lg">Loading community posts...</p>';
+
+        try {
+            const postsCollectionRef = collection(db, `artifacts/${appId}/public/data/posts`);
+
+            onSnapshot(postsCollectionRef, async (snapshot) => {
+                const posts = [];
+                snapshot.forEach(doc => {
+                    posts.push({ id: doc.id, ...doc.data() });
+                });
+
+                posts.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+                postsContainer.innerHTML = '';
+
+                if (posts.length === 0) {
+                    postsContainer.innerHTML = '<p class="text-center text-white text-lg">No posts yet. Be the first to share!</p>';
+                }
+
+                for (const post of posts) {
+                    const postElement = document.createElement('div');
+                    postElement.id = `post-${post.id}`;
+                    postElement.className = 'post-card';
+                    postElement.innerHTML = `
+                        <h3 class="text-2xl font-semibold text-gray-900 mb-2">${post.title}</h3>
+                        <p class="text-gray-700 mb-4">${post.content}</p>
+                        <p class="post-meta">Posted by: <span class="font-medium">${post.authorDisplayName || post.authorId}</span> on ${new Date(post.timestamp).toLocaleString()}</p>
+
+                        <div class="comments-section">
+                            <h4 class="text-xl font-semibold text-gray-800 mb-4">Comments</h4>
+                            <div id="comments-for-${post.id}" class="space-y-4">
+                                <p class="text-gray-500 text-sm">Loading comments...</p>
+                            </div>
+                            <form class="comment-form mt-4" data-post-id="${post.id}">
+                                <textarea name="comment-content" rows="2" placeholder="Add a comment..." required></textarea>
+                                <button type="submit">
+                                    Add Comment
+                                </button>
+                            </form>
+                        </div>
+                    `;
+                    postsContainer.appendChild(postElement);
+                    renderComments(post.id);
+                }
+
+                document.querySelectorAll('.comment-form').forEach(form => {
+                    form.addEventListener('submit', async (event) => {
+                        event.preventDefault();
+                        const postId = form.dataset.postId;
+                        const commentContent = form.querySelector('textarea[name="comment-content"]').value.trim();
+                        if (commentContent) {
+                            await submitComment(postId, commentContent);
+                            form.querySelector('textarea[name="comment-content"]').value = '';
+                        } else {
+                            displayMessage("Comment cannot be empty.", "Warning");
+                        }
+                    });
+                });
+            }, (error) => {
+                console.error("[Community] Error fetching community posts:", error);
+                displayMessage(`Failed to load community posts: ${error.message}`, "Error");
+                postsContainer.innerHTML = '<p class="text-center text-red-500">Failed to load community posts. Please try again later.</p>';
+            });
+
+        } catch (error) {
+            console.error("[Community] Error setting up community posts listener:", error);
+            displayMessage(`Failed to initialize community posts: ${error.message}`, "Error"); 
+        }
+    }
+
+    // Function to render comments for a specific post
+    async function renderComments(postId) {
+        if (!db) return;
+
+        const commentsContainer = document.getElementById(`comments-for-${postId}`);
+        if (!commentsContainer) return;
+
+        const commentsCollectionRef = collection(db, `artifacts/${appId}/public/data/posts/${postId}/comments`);
+
+        onSnapshot(commentsCollectionRef, (snapshot) => {
+            const comments = [];
+            snapshot.forEach(doc => {
+                comments.push({ id: doc.id, ...doc.data() });
+            });
+
+            comments.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+
+            commentsContainer.innerHTML = '';
+
+            if (comments.length === 0) {
+                commentsContainer.innerHTML = '<p class="text-gray-500 text-sm">No comments yet. Be the first to reply!</p>';
+            } else {
+                comments.forEach(comment => {
+                    const commentElement = document.createElement('div');
+                    commentElement.className = 'comment-item';
+                    commentElement.innerHTML = `
+                        <p>${comment.content}</p>
+                        <p class="comment-meta">By: <span class="font-medium">${comment.authorDisplayName || comment.authorId}</span> on ${new Date(comment.timestamp).toLocaleString()}</p>
+                    `;
+                    commentsContainer.appendChild(commentElement);
+                });
+            }
+        }, (error) => {
+            console.error(`[Community] Error loading comments for post ${postId}:`, error);
+        });
+    }
+
+    // Function to submit a new post
+    async function submitCommunityPost(event) {
+        event.preventDefault();
+
+        if (!db || !userId) {
+            displayMessage("Please log in to post a query.", "Login Required");
+            document.getElementById('loginModal').classList.remove('hidden');
+            return;
+        }
+
+        const titleInput = document.getElementById('post-title');
+        const contentInput = document.getElementById('post-content');
+
+        const title = titleInput.value.trim();
+        const content = contentInput.value.trim();
+
+        if (!title || !content) {
+            displayMessage("Please fill in both title and content for your post.", "Missing Information");
+            return;
+        }
+
+        try {
+            await addDoc(collection(db, `artifacts/${appId}/public/data/posts`), {
+                title: title,
+                content: content,
+                authorId: userId, // Store Firebase UID
+                authorDisplayName: currentUserDisplayName, // Store display name for easier rendering
+                timestamp: Date.now()
+            });
+            displayMessage("Your query has been posted successfully!", "Success");
+            titleInput.value = '';
+            contentInput.value = '';
+            console.log("[Community] Post submitted successfully.");
+        } catch (e) {
+            console.error("[Community] Error adding document: ", e);
+            displayMessage(`Error posting query: ${e.message}`, "Error");
+        }
+    }
+
+    // Function to submit a new comment
+    async function submitComment(postId, commentContent) {
+        if (!db || !userId) {
+            displayMessage("Please log in to add a comment.", "Login Required");
+            document.getElementById('loginModal').classList.remove('hidden');
+            return;
+        }
+
+        try {
+            await addDoc(collection(db, `artifacts/${appId}/public/data/posts/${postId}/comments`), {
+                content: commentContent,
+                authorId: userId, // Store Firebase UID
+                authorDisplayName: currentUserDisplayName, // Store display name
+                timestamp: Date.now()
+            });
+            displayMessage("Your comment has been added!", "Success");
+            console.log("[Community] Comment added successfully.");
+        }
+        catch (e) {
+            console.error("[Community] Error adding comment: ", e);
+            displayMessage(`Error adding comment: ${e.message}`, "Error");
+        }
+    }
+
+    // Attach event listener for community post form submission
+    document.getElementById('post-form').addEventListener('submit', submitCommunityPost);
+
+    // --- Friends List Logic (Now Firestore based) ---
+
+    // Load friends list from Firestore
+    function loadFriendsList() {
+        if (!db || !userId) {
+            console.log("[Friends] Firestore or User ID not ready for friends list. Skipping loadFriendsList.");
+            friendsList = []; // Clear local list
+            renderFriendsList(); // Update UI to show empty
+            return;
+        }
+
+        const friendsCollectionRef = collection(db, `artifacts/${appId}/users/${userId}/friends`);
+
+        onSnapshot(friendsCollectionRef, (snapshot) => {
+            friendsList = [];
+            snapshot.forEach(doc => {
+                friendsList.push({ id: doc.id, ...doc.data() });
+            });
+            renderFriendsList();
+            console.log("[Friends] Friends list loaded:", friendsList);
+        }, (error) => {
+            console.error("[Friends] Error loading friends list:", error);
+            displayMessage(`Failed to load friends list: ${error.message}`, "Error");
+        });
+    }
+
+    // Render friends list in the UI
+    function renderFriendsList() {
+        const friendsListUl = document.getElementById('friends-list');
+        friendsListUl.innerHTML = ''; // Clear existing list
+
+        if (friendsList.length === 0) {
+            friendsListUl.innerHTML = '<p class="text-center text-gray-500">No friends added yet.</p>';
+            return;
+        }
+
+        friendsList.forEach(friend => {
+            const listItem = document.createElement('li');
+            listItem.innerHTML = `
+                <span>${friend.displayName || friend.friendEmail}</span>
+                <button data-friend-id="${friend.id}">Remove</button>
+            `;
+            friendsListUl.appendChild(listItem);
+        });
+
+        // Add event listeners for remove buttons
+        friendsListUl.querySelectorAll('button').forEach(button => {
+            button.addEventListener('click', function() {
+                const friendDocId = this.dataset.friendId;
+                removeFriend(friendDocId);
+            });
+        });
+    }
+
+    // Add a friend
+    document.getElementById('add-friend-btn').addEventListener('click', async function() {
+        if (!userId) {
+            displayMessage("Please log in to add friends.", "Login Required");
+            document.getElementById('loginModal').classList.remove('hidden');
+            return;
+        }
+
+        const friendEmailInput = document.getElementById('friend-username-input'); // Renamed to email
+        const friendEmail = friendEmailInput.value.trim();
+
+        if (!friendEmail) {
+            displayMessage("Please enter an email to add as a friend.", "Missing Email");
+            return;
+        }
+
+        if (friendEmail === auth.currentUser.email) {
+            displayMessage("You cannot add yourself as a friend.", "Invalid Action");
+            return;
+        }
+        
+        // Check if already friends
+        if (friendsList.some(f => f.friendEmail === friendEmail)) {
+            displayMessage(`${friendEmail} is already in your friends list.`, "Already Friends");
+            return;
+        }
+
+        try {
+            console.log("[Friends] Attempting to add friend:", friendEmail);
+            // Find the friend's UID by their email in the 'users' collection
+            const usersRef = collection(db, `artifacts/${appId}/users`);
+            const q = query(usersRef, where("email", "==", friendEmail));
+            const querySnapshot = await getDocs(q);
+
+            if (querySnapshot.empty) {
+                displayMessage(`User with email "${friendEmail}" not found.`, "User Not Found");
+                console.log("[Friends] Friend not found in users collection.");
+                return;
+            }
+
+            const friendDoc = querySnapshot.docs[0];
+            const friendUid = friendDoc.id;
+            const friendDisplayName = friendDoc.data().displayName || friendDoc.data().email;
+
+            // Add friend to current user's friends subcollection
+            await addDoc(collection(db, `artifacts/${appId}/users/${userId}/friends`), {
+                friendUid: friendUid,
+                friendEmail: friendEmail,
+                displayName: friendDisplayName,
+                addedAt: Date.now()
+            });
+
+            displayMessage(`${friendDisplayName} added to your friends list!`, "Friend Added");
+            friendEmailInput.value = ''; // Clear input
+            console.log("[Friends] Friend added successfully.");
+        } catch (error) {
+            console.error("[Friends] Error adding friend:", error);
+            displayMessage(`Error adding friend: ${error.message}`, "Error");
+        }
+    });
+
+    // Remove a friend
+    async function removeFriend(friendDocId) {
+        if (!db || !userId) {
+            displayMessage('Please log in to remove friends.', 'Login Required');
+            document.getElementById('loginModal').classList.remove('hidden');
+            return;
+        }
+
+        displayMessage('Are you sure you want to remove this friend?', 'Confirm Removal', true, async () => {
+            try {
+                await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/friends`, friendDocId));
+                displayMessage("Friend removed successfully!", "Friend Removed");
+                console.log("[Friends] Friend removed successfully.");
+            } catch (e) {
+                console.error("[Friends] Error removing friend from Firestore: ", e);
+                displayMessage(`Error removing friend: ${e.message}`, "Error");
+            }
+        });
+    }
+
+    // --- Leaderboard Logic (Firestore based) ---
+    async function updateLeaderboard() {
+        if (!db) {
+            console.log("[Leaderboard] Firestore not initialized for leaderboard.");
+            return;
+        }
+
+        const leaderboardBody = document.getElementById('leaderboardBody');
+        leaderboardBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Loading leaderboard...</td></tr>';
+
+        try {
+            console.log("[Leaderboard] Fetching all user profiles for leaderboard.");
+            // Fetch all user profiles to get their display names and UIDs
+            const usersCollectionRef = collection(db, `artifacts/${appId}/users`);
+            const userDocsSnapshot = await getDocs(usersCollectionRef);
+
+            const userAverages = [];
+
+            // Iterate through each user profile
+            for (const userDoc of userDocsSnapshot.docs) {
+                const userUid = userDoc.id;
+                const userProfileData = userDoc.data();
+                const displayName = userProfileData.displayName || userProfileData.email || `Anon-${userUid.substring(0,6)}`;
+                
+                // Fetch trips for each user
+                const tripsSnapshot = await getDocs(collection(db, `artifacts/${appId}/users/${userUid}/trips`));
+                const trips = [];
+                tripsSnapshot.forEach(tripDoc => trips.push(tripDoc.data()));
+
+                if (trips.length > 0) {
+                    const totalScore = trips.reduce((sum, trip) => sum + trip.score, 0);
+                    const avgScore = totalScore / trips.length;
+                    userAverages.push({
+                        uid: userUid,
+                        displayName: displayName,
+                        avgScore: Math.round(avgScore),
+                        badge: getBadge(avgScore)
+                    });
+                }
+            }
+
+            // Sort top 3
+            const topUsers = userAverages.sort((a, b) => b.avgScore - a.avgScore).slice(0, 3);
+
+            if (topUsers.length === 0) {
+                leaderboardBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No users yet</td></tr>';
+                console.log("[Leaderboard] No users found for leaderboard.");
+                return;
+            }
+
+            leaderboardBody.innerHTML = topUsers.map((user, index) => `
+                <tr>
+                    <td>🏅 ${index + 1}</td>
+                    <td>${user.displayName}</td>
+                    <td>${user.avgScore}</td>
+                    <td><span class="badge badge-${user.badge.toLowerCase()}">${user.badge}</span></td>
+                </tr>
+            `).join('');
+            console.log("[Leaderboard] Leaderboard updated successfully.");
+
+        } catch (error) {
+            console.error("[Leaderboard] Error updating leaderboard:", error);
+            leaderboardBody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:red;">Failed to load leaderboard.</td></tr>';
+            displayMessage(`Failed to load leaderboard: ${error.message}`, "Error");
+        }
+    }
+
+    // --- Leaflet Map Logic ---
+    function initMap() {
+      // Initialize the map only if it hasn't been initialized yet
+      if (mapInstance) {
+          mapInstance.remove(); // Remove existing map if any
+          mapInstance = null;
+      }
+      mapInstance = L.map('fishingMap').setView([13.0827, 80.2707], 10); // Chennai coordinates
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(mapInstance);
+
+      // Add Fishing Port Markers
+      const fishingLocations = [
+        { name: 'Chennai Port', lat: 13.0827, lng: 80.2707, color: 'green' },
+        { name: 'Kasimedu Harbour', lat: 13.1233, lng: 80.2942, color: 'green' },
+        { name: 'Ennore Port', lat: 13.2426, lng: 80.3304, color: 'green' }
+      ];
+
+      fishingLocations.forEach(loc => {
+        L.marker([loc.lat, loc.lng], {
+            icon: L.divIcon({
+                className: 'custom-div-icon',
+                html: `<div style="background-color:${loc.color}; width:10px; height:10px; border-radius:50%; border:2px solid white;"></div>`,
+                iconSize: [14, 14],
+                iconAnchor: [7, 7]
+            })
+        })
+          .addTo(mapInstance)
+          .bindPopup(`<b>${loc.name}</b>`);
+      });
+
+      // Show User's Live Location
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+          const userLat = position.coords.latitude;
+          const userLng = position.coords.longitude;
+
+          L.marker([userLat, userLng], {
+              icon: L.divIcon({
+                  className: 'custom-div-icon',
+                  html: `<div style="background-color:blue; width:10px; height:10px; border-radius:50%; border:2px solid white;"></div>`,
+                  iconSize: [14, 14],
+                  iconAnchor: [7, 7]
+              })
+          })
+            .addTo(mapInstance)
+            .bindPopup("<b>You are here!</b>")
+            .openPopup();
+
+          mapInstance.setView([userLat, userLng], 12);
+        }, function(error) {
+          console.log("[Map] Geolocation permission denied or unavailable:", error.message);
+          displayMessage("Geolocation is unavailable or permission denied. Cannot show your live location.", "Geolocation Error");
+        });
+      }
+
+      // Add No-Fishing Zones (Red Circles)
+      const noFishingZones = [
+        { lat: 13.15, lng: 80.25, radius: 2000 },
+        { lat: 13.10, lng: 80.35, radius: 1500 }
+      ];
+
+      noFishingZones.forEach(zone => {
+        L.circle([zone.lat, zone.lng], {
+          color: 'red',
+          fillColor: '#f03',
+          fillOpacity: 0.4,
+          radius: zone.radius
+        }).addTo(mapInstance).bindPopup("🚫 No Fishing Zone");
+      });
+
+      // Add Click-to-Log Trip Marker
+      mapInstance.on('click', function(e) {
+        const { lat, lng } = e.latlng;
+        L.marker([lat, lng])
+          .addTo(mapInstance)
+          .bindPopup(`📍 Trip Logged at:<br>Lat: ${lat.toFixed(3)}<br>Lng: ${lng.toFixed(3)}`)
+          .openPopup();
+      });
+
+      // Add Legend (Mini Box on Map)
+      const legend = L.control({ position: 'bottomright' });
+      legend.onAdd = function() {
+        const div = L.DomUtil.create('div', 'map-legend');
+        div.innerHTML = `
+          <h4>Map Legend</h4>
+          <p><span style="color:green;">●</span> Fishing Port</p>
+          <p><span style="color:red;">●</span> No-Fishing Zone</p>
+          <p><span style="color:blue;">●</span> Your Location</p>
+        `;
+        return div;
+      };
+      legend.addTo(mapInstance);
+    }
+
+
+    // --- General Initializations ---
+    document.addEventListener('DOMContentLoaded', function() {
+      initChart();
+      // Initialize Choices.js dropdowns
+      const gearChoice = new Choices('#gearType', {
+        searchEnabled: true,
+        itemSelectText: '',
+      });
+      const speciesChoice = new Choices('#speciesType', {
+        searchEnabled: true,
+        itemSelectText: '',
+      });
+
+      // Firebase initialization and auth listener will handle loading data
+      initializeFirebaseAndAuth(); 
+      // Show the default section (e.g., calculator) on load
+      showSection('calculator'); 
+      initMap(); // Initialize map on page load
+    });
+  </script>
+</body>
+</html>
